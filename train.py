@@ -1,15 +1,38 @@
 import torch
 import os
+import gzip
+import pickle
 from src.model.gpt import GPT
 from src.model.config import GPTConfig
 from src.data.dataloader import DataLoaderLite
 from src.utils.device import get_device
 
+def save_compressed_model(model, path):
+    """Save model with compression"""
+    state_dict = model.state_dict()
+    # Convert tensors to half precision
+    for key in state_dict:
+        if state_dict[key].dtype == torch.float32:
+            state_dict[key] = state_dict[key].half()
+    # Compress and save
+    with gzip.open(path, 'wb', compresslevel=9) as f:
+        pickle.dump(state_dict, f)
+
+def load_compressed_model(model, path):
+    """Load compressed model"""
+    with gzip.open(path, 'rb') as f:
+        state_dict = pickle.load(f)
+    # Convert back to float32 for training
+    for key in state_dict:
+        if state_dict[key].dtype == torch.float16:
+            state_dict[key] = state_dict[key].float()
+    model.load_state_dict(state_dict)
+
 def train():
     device = get_device()
     print(f"using device: {device}")
     best_loss = float('inf')
-    model_path = 'best_model.pt'
+    model_path = 'best_model.gz'
 
     # Set seeds
     torch.manual_seed(1337)
@@ -20,7 +43,7 @@ def train():
     if os.path.exists(model_path):
         print(f"Loading previous best model from {model_path}")
         model = GPT(GPTConfig())
-        model.load_state_dict(torch.load(model_path))
+        load_compressed_model(model, model_path)
         model.to(device)
     else:
         model = GPT(GPTConfig())
@@ -37,7 +60,7 @@ def train():
     
     # Initialize data loader
     train_loader = DataLoaderLite(B=4, T=32)
-    num_epochs = 1  # Define number of epochs
+    num_epochs = 100  # Define number of epochs
     steps_per_epoch = len(train_loader.tokens) // (train_loader.B * train_loader.T)
 
     # Training loop
@@ -73,7 +96,7 @@ def train():
         if avg_loss < best_loss:
             best_loss = avg_loss
             print(f"New best loss: {best_loss:.4f}, saving model to {model_path}")
-            torch.save(model.state_dict(), model_path)
+            save_compressed_model(model, model_path)
 
 if __name__ == "__main__":
     train() 
