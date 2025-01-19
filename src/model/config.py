@@ -4,9 +4,9 @@ from dataclasses import dataclass
 class GPTConfig:
     block_size: int = 1024  # max sequence length
     vocab_size: int = 50257  # number of tokens: 50,000 BPE merges + 256 bytes tokens + 1 <|endoftext|> token
-    n_layer: int = 6  # Reduced number of layers for faster training
-    n_head: int = 8   # Modified number of attention heads
-    n_embd: int = 512 # Reduced embedding dimension
+    n_layer: int = 12  # GPT-2 small architecture
+    n_head: int = 12   # 12 attention heads
+    n_embd: int = 768  # 768-dimensional embeddings
     dropout: float = 0.1  # Added dropout for regularization
 
     def __post_init__(self):

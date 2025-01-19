@@ -59,12 +59,12 @@ def train():
     print(f"Trainable Parameters: {trainable_params:,}\n")
     
     # Initialize data loader
-    train_loader = DataLoaderLite(B=4, T=32)
+    train_loader = DataLoaderLite(B=8, T=64)  # Increased batch size and sequence length
     num_epochs = 100  # Define number of epochs
     steps_per_epoch = len(train_loader.tokens) // (train_loader.B * train_loader.T)
 
     # Training loop
-    optimizer = torch.optim.AdamW(model.parameters(), lr=6e-4, betas=(0.9, 0.95), weight_decay=0.1)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.95), weight_decay=0.1)
     
     # Learning rate scheduler
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
